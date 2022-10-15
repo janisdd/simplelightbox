@@ -716,6 +716,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
           return true;
         }
 
+        //TODO improve zoom?? img can only be moved if out of viewport??
         // let container = this.domNodes.image
         var container = _this6.domNodes.imageInnerWrapper;
         if (event.type === 'mousedown') {
@@ -1048,7 +1049,6 @@ var SimpleLightbox = /*#__PURE__*/function () {
         this.domNodes.caption.style.display = 'block';
         this.domNodes.caption.style.opacity = '0';
         var captionRect = this.domNodes.caption.getBoundingClientRect();
-        console.log(captionRect);
         var imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - captionRect.height;
         var requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio;
         this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';

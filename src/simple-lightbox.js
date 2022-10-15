@@ -1160,7 +1160,6 @@ class SimpleLightbox {
             this.domNodes.caption.style.display = 'block';
             this.domNodes.caption.style.opacity = '0';
             let captionRect = this.domNodes.caption.getBoundingClientRect();
-            console.log(captionRect)
 
             let imageHeightWithoutCaption =this.domNodes.imageInnerWrapper.getBoundingClientRect().height - captionRect.height;
             let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
