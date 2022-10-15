@@ -1,3 +1,19 @@
+
+### Changes
+
+- changed outside captions to always stay in window bounds
+  - image size is reduced if needed
+
+
+#### Issues
+
+- there is a flickering if we switch from an image with no caption to an image with a large caption (the image size "jumps")
+  - probably because the size is changed after the transition/animation to the next image...
+- if an image has a caption there is a zoom issue where the image cannot be moved until the image is out of the viewport 
+  - should be fine for captions with only a few lines
+
+---
+
 # simplelightbox
 Touch-friendly image lightbox for mobile and desktop
 

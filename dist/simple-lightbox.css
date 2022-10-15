@@ -98,11 +98,16 @@ body.hidden-scroll {
   .sl-wrapper.sl-dir-rtl .sl-navigation {
     direction: ltr; }
   .sl-wrapper .sl-image {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    margin: auto; }
+  .sl-wrapper .sl-image-inner-wrapper {
     position: fixed;
     -ms-touch-action: none;
     touch-action: none;
     z-index: 10000; }
-    .sl-wrapper .sl-image img {
+    .sl-wrapper .sl-image-inner-wrapper img {
       margin: 0;
       padding: 0;
       display: block;
@@ -110,21 +115,21 @@ body.hidden-scroll {
       width: 100%;
       height: auto; }
       @media (min-width: 35.5em) {
-        .sl-wrapper .sl-image img {
+        .sl-wrapper .sl-image-inner-wrapper img {
           border: 0 none; } }
       @media (min-width: 50em) {
-        .sl-wrapper .sl-image img {
+        .sl-wrapper .sl-image-inner-wrapper img {
           border: 0 none; } }
-    .sl-wrapper .sl-image iframe {
+    .sl-wrapper .sl-image-inner-wrapper iframe {
       background: #000;
       border: 0 none; }
       @media (min-width: 35.5em) {
-        .sl-wrapper .sl-image iframe {
+        .sl-wrapper .sl-image-inner-wrapper iframe {
           border: 0 none; } }
       @media (min-width: 50em) {
-        .sl-wrapper .sl-image iframe {
+        .sl-wrapper .sl-image-inner-wrapper iframe {
           border: 0 none; } }
-    .sl-wrapper .sl-image .sl-caption {
+    .sl-wrapper .sl-image-inner-wrapper .sl-caption {
       display: none;
       padding: 10px;
       color: #fff;
@@ -134,12 +139,12 @@ body.hidden-scroll {
       bottom: 0;
       left: 0;
       right: 0; }
-      .sl-wrapper .sl-image .sl-caption.pos-top {
+      .sl-wrapper .sl-image-inner-wrapper .sl-caption.pos-top {
         bottom: auto;
         top: 0; }
-      .sl-wrapper .sl-image .sl-caption.pos-outside {
+      .sl-wrapper .sl-image-inner-wrapper .sl-caption.pos-outside {
         bottom: auto; }
-    .sl-wrapper .sl-image .sl-download {
+    .sl-wrapper .sl-image-inner-wrapper .sl-download {
       display: none;
       position: absolute;
       bottom: 5px;

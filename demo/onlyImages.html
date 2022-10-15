@@ -50,6 +50,8 @@
 <div class="container">
     <h1 class="align-center">Simple Lightbox Demo Page</h1>
     <div class="gallery">
+<!--        <a href="img/full/01.jpg" class="big"><img src="img/thumb/01.jpg" alt="" title="Beautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful Image Beautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful Image ENDE999999999" /></a>-->
+        <a href="img/full/01.jpg" class="big"><img src="img/thumb/01.jpg" alt="" title="Beautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautiful ImageBeautifule ENDE999999999" /></a>
         <a href="img/full/01.jpg" class="big"><img src="img/thumb/01.jpg" alt="" title="Beautiful Image" /></a>
         <a href="img/full/02.jpg"><img src="img/thumb/02.jpg" alt="" title=""/></a>
         <a href="img/full/03.jpg"><img src="img/thumb/03.jpg" alt="" title="Beautiful Image"/></a>
@@ -65,7 +67,9 @@
 <script src="../dist/simple-lightbox.js?v2.8.0"></script>
 <script>
     (function() {
-        var $gallery = new SimpleLightbox('.gallery a', {});
+        var $gallery = new SimpleLightbox('.gallery a', {
+            captionPosition: 'outside'
+        });
     })();
 </script>
 </body>

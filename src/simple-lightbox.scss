@@ -157,6 +157,12 @@ body.hidden-scroll {
     }
 
     .sl-image {
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        margin: auto;
+    }
+    .sl-image-inner-wrapper {
         position: fixed;
         @if $add-vendor-prefixes {
             -ms-touch-action: none;
