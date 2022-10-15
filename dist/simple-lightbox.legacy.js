@@ -4891,6 +4891,8 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 var SimpleLightbox = /*#__PURE__*/function () {
+  //image aspect ratio
+
   function SimpleLightbox(elements, options) {
     var _this = this;
     _classCallCheck(this, SimpleLightbox);
@@ -4961,6 +4963,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
     _defineProperty(this, "currentImage", void 0);
     _defineProperty(this, "eventNamespace", 'simplelightbox');
     _defineProperty(this, "domNodes", {});
+    _defineProperty(this, "imageRatio", 1);
     _defineProperty(this, "loadedImages", []);
     _defineProperty(this, "initialImageIndex", 0);
     _defineProperty(this, "currentImageIndex", 0);
@@ -5141,6 +5144,9 @@ var SimpleLightbox = /*#__PURE__*/function () {
       }
       this.domNodes.image = document.createElement('div');
       this.domNodes.image.classList.add('sl-image');
+      this.domNodes.imageInnerWrapper = document.createElement('div');
+      this.domNodes.imageInnerWrapper.classList.add('sl-image-inner-wrapper');
+      this.domNodes.imageInnerWrapper.appendChild(this.domNodes.image);
       this.domNodes.wrapper = document.createElement('div');
       this.domNodes.wrapper.classList.add('sl-wrapper');
       this.domNodes.wrapper.setAttribute('tabindex', -1);
@@ -5317,7 +5323,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
       if (this.options.animationSlide) {
         this.slide(this.options.animationSpeed / 1000, -100 * slideDirection - this.controlCoordinates.swipeDiff + 'px');
       }
-      this.fadeOut(this.domNodes.image, this.options.fadeSpeed, function () {
+      this.fadeOut(this.domNodes.imageInnerWrapper, this.options.fadeSpeed, function () {
         _this4.isAnimating = true;
         if (!_this4.isClosing) {
           setTimeout(function () {
@@ -5326,8 +5332,8 @@ var SimpleLightbox = /*#__PURE__*/function () {
             if (_this4.loadedImages.indexOf(element.getAttribute(_this4.options.sourceAttr)) === -1) {
               _this4.show(_this4.domNodes.spinner);
             }
-            if (_this4.domNodes.image.contains(_this4.domNodes.caption)) {
-              _this4.domNodes.image.removeChild(_this4.domNodes.caption);
+            if (_this4.domNodes.imageInnerWrapper.contains(_this4.domNodes.caption)) {
+              _this4.domNodes.imageInnerWrapper.removeChild(_this4.domNodes.caption);
             }
             _this4.adjustImage(slideDirection);
             if (_this4.options.preloading) _this4.preload();
@@ -5386,10 +5392,12 @@ var SimpleLightbox = /*#__PURE__*/function () {
           imageWidth /= ratio;
           imageHeight /= ratio;
         }
-        _this5.domNodes.image.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
-        _this5.domNodes.image.style.left = (window.innerWidth - imageWidth - _this5.globalScrollbarWidth) / 2 + 'px';
-        _this5.domNodes.image.style.width = imageWidth + 'px';
-        _this5.domNodes.image.style.height = imageHeight + 'px';
+        _this5.imageRatio = imageWidth / imageHeight;
+        _this5.domNodes.image.style.width = null;
+        _this5.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
+        _this5.domNodes.imageInnerWrapper.style.left = (window.innerWidth - imageWidth - _this5.globalScrollbarWidth) / 2 + 'px';
+        _this5.domNodes.imageInnerWrapper.style.width = imageWidth + 'px';
+        _this5.domNodes.imageInnerWrapper.style.height = imageHeight + 'px';
         _this5.domNodes.spinner.style.display = 'none';
         if (_this5.options.focus) {
           _this5.forceFocus();
@@ -5442,7 +5450,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
               _this5.slide(_this5.options.animationSpeed / 1000, 0 + 'px');
             }, 50);
           }
-          _this5.fadeIn(_this5.domNodes.image, _this5.options.fadeSpeed, function () {
+          _this5.fadeIn(_this5.domNodes.imageInnerWrapper, _this5.options.fadeSpeed, function () {
             _this5.isAnimating = false;
             _this5.setCaption(captionText, imageWidth);
           });
@@ -5454,7 +5462,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
           _this5.domNodes.additionalHtml = document.createElement('div');
           _this5.domNodes.additionalHtml.classList.add('sl-additional-html');
           _this5.domNodes.additionalHtml.innerHTML = _this5.options.additionalHtml;
-          _this5.domNodes.image.appendChild(_this5.domNodes.additionalHtml);
+          _this5.domNodes.imageInnerWrapper.appendChild(_this5.domNodes.additionalHtml);
         }
       });
     }
@@ -5514,17 +5522,17 @@ var SimpleLightbox = /*#__PURE__*/function () {
       });
       if (this.options.scrollZoom) {
         var scale = 1;
-        this.addEventListener(this.domNodes.image, ['mousewheel', 'DOMMouseScroll'], function (event) {
+        this.addEventListener(this.domNodes.imageInnerWrapper, ['mousewheel', 'DOMMouseScroll'], function (event) {
           if (_this6.controlCoordinates.mousedown || _this6.isAnimating || _this6.isClosing || !_this6.isOpen) {
             return true;
           }
           if (_this6.controlCoordinates.containerHeight == 0) {
-            _this6.controlCoordinates.containerHeight = _this6.getDimensions(_this6.domNodes.image).height;
-            _this6.controlCoordinates.containerWidth = _this6.getDimensions(_this6.domNodes.image).width;
+            _this6.controlCoordinates.containerHeight = _this6.getDimensions(_this6.domNodes.imageInnerWrapper).height;
+            _this6.controlCoordinates.containerWidth = _this6.getDimensions(_this6.domNodes.imageInnerWrapper).width;
             _this6.controlCoordinates.imgHeight = _this6.getDimensions(_this6.currentImage).height;
             _this6.controlCoordinates.imgWidth = _this6.getDimensions(_this6.currentImage).width;
-            _this6.controlCoordinates.containerOffsetX = _this6.domNodes.image.offsetLeft;
-            _this6.controlCoordinates.containerOffsetY = _this6.domNodes.image.offsetTop;
+            _this6.controlCoordinates.containerOffsetX = _this6.domNodes.imageInnerWrapper.offsetLeft;
+            _this6.controlCoordinates.containerOffsetY = _this6.domNodes.imageInnerWrapper.offsetTop;
             _this6.controlCoordinates.initialOffsetX = parseFloat(_this6.currentImage.dataset.translateX);
             _this6.controlCoordinates.initialOffsetY = parseFloat(_this6.currentImage.dataset.translateY);
           }
@@ -5573,20 +5581,24 @@ var SimpleLightbox = /*#__PURE__*/function () {
           _this6.zoomPanElement(_this6.controlCoordinates.targetOffsetX + "px", _this6.controlCoordinates.targetOffsetY + "px", _this6.controlCoordinates.targetScale);
         });
       }
-      this.addEventListener(this.domNodes.image, ['touchstart.' + this.eventNamespace, 'mousedown.' + this.eventNamespace], function (event) {
+      this.addEventListener(this.domNodes.imageInnerWrapper, ['touchstart.' + this.eventNamespace, 'mousedown.' + this.eventNamespace], function (event) {
         if (event.target.tagName === 'A' && event.type === 'touchstart') {
           return true;
         }
+
+        //TODO improve zoom?? img can only be moved if out of viewport??
+        // let container = this.domNodes.image
+        var container = _this6.domNodes.imageInnerWrapper;
         if (event.type === 'mousedown') {
           event.preventDefault();
           _this6.controlCoordinates.initialPointerOffsetX = event.clientX;
           _this6.controlCoordinates.initialPointerOffsetY = event.clientY;
-          _this6.controlCoordinates.containerHeight = _this6.getDimensions(_this6.domNodes.image).height;
-          _this6.controlCoordinates.containerWidth = _this6.getDimensions(_this6.domNodes.image).width;
+          _this6.controlCoordinates.containerHeight = _this6.getDimensions(container).height;
+          _this6.controlCoordinates.containerWidth = _this6.getDimensions(container).width;
           _this6.controlCoordinates.imgHeight = _this6.getDimensions(_this6.currentImage).height;
           _this6.controlCoordinates.imgWidth = _this6.getDimensions(_this6.currentImage).width;
-          _this6.controlCoordinates.containerOffsetX = _this6.domNodes.image.offsetLeft;
-          _this6.controlCoordinates.containerOffsetY = _this6.domNodes.image.offsetTop;
+          _this6.controlCoordinates.containerOffsetX = container.offsetLeft;
+          _this6.controlCoordinates.containerOffsetY = container.offsetTop;
           _this6.controlCoordinates.initialOffsetX = parseFloat(_this6.currentImage.dataset.translateX);
           _this6.controlCoordinates.initialOffsetY = parseFloat(_this6.currentImage.dataset.translateY);
           _this6.controlCoordinates.capture = true;
@@ -5594,12 +5606,12 @@ var SimpleLightbox = /*#__PURE__*/function () {
           _this6.controlCoordinates.touchCount = event.touches.length;
           _this6.controlCoordinates.initialPointerOffsetX = event.touches[0].clientX;
           _this6.controlCoordinates.initialPointerOffsetY = event.touches[0].clientY;
-          _this6.controlCoordinates.containerHeight = _this6.getDimensions(_this6.domNodes.image).height;
-          _this6.controlCoordinates.containerWidth = _this6.getDimensions(_this6.domNodes.image).width;
+          _this6.controlCoordinates.containerHeight = _this6.getDimensions(container).height;
+          _this6.controlCoordinates.containerWidth = _this6.getDimensions(container).width;
           _this6.controlCoordinates.imgHeight = _this6.getDimensions(_this6.currentImage).height;
           _this6.controlCoordinates.imgWidth = _this6.getDimensions(_this6.currentImage).width;
-          _this6.controlCoordinates.containerOffsetX = _this6.domNodes.image.offsetLeft;
-          _this6.controlCoordinates.containerOffsetY = _this6.domNodes.image.offsetTop;
+          _this6.controlCoordinates.containerOffsetX = container.offsetLeft;
+          _this6.controlCoordinates.containerOffsetY = container.offsetTop;
           if (_this6.controlCoordinates.touchCount === 1) /* Single touch */{
               if (!_this6.controlCoordinates.doubleTapped) {
                 _this6.controlCoordinates.doubleTapped = true;
@@ -5644,7 +5656,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
         }
         if (_this6.controlCoordinates.mousedown) return true;
         if (_this6.transitionCapable) {
-          _this6.controlCoordinates.imageLeft = parseInt(_this6.domNodes.image.style.left, 10);
+          _this6.controlCoordinates.imageLeft = parseInt(_this6.domNodes.imageInnerWrapper.style.left, 10);
         }
         _this6.controlCoordinates.mousedown = true;
         _this6.controlCoordinates.swipeDiff = 0;
@@ -5653,7 +5665,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
         _this6.controlCoordinates.swipeYStart = event.pageY || event.touches[0].pageY;
         return false;
       });
-      this.addEventListener(this.domNodes.image, ['touchmove.' + this.eventNamespace, 'mousemove.' + this.eventNamespace, 'MSPointerMove'], function (event) {
+      this.addEventListener(this.domNodes.imageInnerWrapper, ['touchmove.' + this.eventNamespace, 'mousemove.' + this.eventNamespace, 'MSPointerMove'], function (event) {
         if (!_this6.controlCoordinates.mousedown) {
           return true;
         }
@@ -5744,7 +5756,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
           }
         }
       });
-      this.addEventListener(this.domNodes.image, ['touchend.' + this.eventNamespace, 'mouseup.' + this.eventNamespace, 'touchcancel.' + this.eventNamespace, 'mouseleave.' + this.eventNamespace, 'pointerup', 'pointercancel', 'MSPointerUp', 'MSPointerCancel'], function (event) {
+      this.addEventListener(this.domNodes.imageInnerWrapper, ['touchend.' + this.eventNamespace, 'mouseup.' + this.eventNamespace, 'touchcancel.' + this.eventNamespace, 'mouseleave.' + this.eventNamespace, 'pointerup', 'pointercancel', 'MSPointerUp', 'MSPointerCancel'], function (event) {
         if (_this6.isTouchDevice && event.type === 'touchend') {
           _this6.controlCoordinates.touchCount = event.touches.length;
           if (_this6.controlCoordinates.touchCount === 0) /* No touch */{
@@ -5788,16 +5800,16 @@ var SimpleLightbox = /*#__PURE__*/function () {
           }
         }
       });
-      this.addEventListener(this.domNodes.image, ['dblclick'], function (event) {
+      this.addEventListener(this.domNodes.imageInnerWrapper, ['dblclick'], function (event) {
         if (_this6.isTouchDevice) return;
         _this6.controlCoordinates.initialPointerOffsetX = event.clientX;
         _this6.controlCoordinates.initialPointerOffsetY = event.clientY;
-        _this6.controlCoordinates.containerHeight = _this6.getDimensions(_this6.domNodes.image).height;
-        _this6.controlCoordinates.containerWidth = _this6.getDimensions(_this6.domNodes.image).width;
+        _this6.controlCoordinates.containerHeight = _this6.getDimensions(_this6.domNodes.imageInnerWrapper).height;
+        _this6.controlCoordinates.containerWidth = _this6.getDimensions(_this6.domNodes.imageInnerWrapper).width;
         _this6.controlCoordinates.imgHeight = _this6.getDimensions(_this6.currentImage).height;
         _this6.controlCoordinates.imgWidth = _this6.getDimensions(_this6.currentImage).width;
-        _this6.controlCoordinates.containerOffsetX = _this6.domNodes.image.offsetLeft;
-        _this6.controlCoordinates.containerOffsetY = _this6.domNodes.image.offsetTop;
+        _this6.controlCoordinates.containerOffsetX = _this6.domNodes.imageInnerWrapper.offsetLeft;
+        _this6.controlCoordinates.containerOffsetY = _this6.domNodes.imageInnerWrapper.offsetTop;
         _this6.currentImage.classList.add('sl-transition');
         if (!_this6.controlCoordinates.zoomed) {
           _this6.controlCoordinates.initialScale = _this6.options.doubleTapZoom;
@@ -5901,7 +5913,15 @@ var SimpleLightbox = /*#__PURE__*/function () {
         this.hide(this.domNodes.caption);
         this.domNodes.caption.style.width = imageWidth + 'px';
         this.domNodes.caption.innerHTML = captionText;
-        this.domNodes.image.appendChild(this.domNodes.caption);
+        this.domNodes.imageInnerWrapper.appendChild(this.domNodes.caption);
+
+        //display it to get the dimensions
+        this.domNodes.caption.style.display = 'block';
+        this.domNodes.caption.style.opacity = '0';
+        var captionRect = this.domNodes.caption.getBoundingClientRect();
+        var imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - captionRect.height;
+        var requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio;
+        this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
         setTimeout(function () {
           _this7.fadeIn(_this7.domNodes.caption, _this7.options.fadeSpeed);
         }, this.options.captionDelay);
@@ -5911,10 +5931,10 @@ var SimpleLightbox = /*#__PURE__*/function () {
     key: "slide",
     value: function slide(speed, pos) {
       if (!this.transitionCapable) {
-        return this.domNodes.image.style.left = pos;
+        return this.domNodes.imageInnerWrapper.style.left = pos;
       }
-      this.domNodes.image.style[this.transitionPrefix + 'transform'] = 'translateX(' + pos + ')';
-      this.domNodes.image.style[this.transitionPrefix + 'transition'] = this.transitionPrefix + 'transform ' + speed + 's linear';
+      this.domNodes.imageInnerWrapper.style[this.transitionPrefix + 'transform'] = 'translateX(' + pos + ')';
+      this.domNodes.imageInnerWrapper.style[this.transitionPrefix + 'transition'] = this.transitionPrefix + 'transform ' + speed + 's linear';
     }
   }, {
     key: "getRelated",
@@ -5941,7 +5961,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
         document.querySelector('html').classList.add(this.options.htmlClass);
       }
       document.body.appendChild(this.domNodes.wrapper);
-      this.domNodes.wrapper.appendChild(this.domNodes.image);
+      this.domNodes.wrapper.appendChild(this.domNodes.imageInnerWrapper);
       if (this.options.overlay) {
         document.body.appendChild(this.domNodes.overlay);
       }
@@ -5965,9 +5985,12 @@ var SimpleLightbox = /*#__PURE__*/function () {
       if (this.loadedImages.indexOf(targetURL) === -1) {
         this.loadedImages.push(targetURL);
       }
-      this.domNodes.image.innerHTML = '';
-      this.domNodes.image.setAttribute('style', '');
+      this.domNodes.imageInnerWrapper.innerHTML = '';
+      this.domNodes.imageInnerWrapper.setAttribute('style', '');
+      this.domNodes.imageInnerWrapper.appendChild(this.domNodes.image);
       this.domNodes.image.appendChild(this.currentImage);
+      // this.domNodes.imageInnerWrapper.appendChild(this.currentImage);
+
       this.fadeIn(this.domNodes.overlay, this.options.fadeSpeed);
       this.fadeIn([this.domNodes.counter, this.domNodes.navigation, this.domNodes.closeButton], this.options.fadeSpeed);
       this.show(this.domNodes.spinner);

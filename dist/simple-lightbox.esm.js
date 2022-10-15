@@ -79,6 +79,7 @@ class SimpleLightbox {
     currentImage;
     eventNamespace = 'simplelightbox';
     domNodes = {};
+    imageRatio = 1; //image aspect ratio
 
     loadedImages = [];
     initialImageIndex = 0;
@@ -285,6 +286,10 @@ class SimpleLightbox {
         this.domNodes.image = document.createElement('div');
         this.domNodes.image.classList.add('sl-image');
 
+        this.domNodes.imageInnerWrapper = document.createElement('div');
+        this.domNodes.imageInnerWrapper.classList.add('sl-image-inner-wrapper');
+        this.domNodes.imageInnerWrapper.appendChild(this.domNodes.image);
+
         this.domNodes.wrapper = document.createElement('div');
         this.domNodes.wrapper.classList.add('sl-wrapper');
         this.domNodes.wrapper.setAttribute('tabindex',-1);
@@ -478,7 +483,7 @@ class SimpleLightbox {
         if (this.options.animationSlide) {
             this.slide(this.options.animationSpeed / 1000, (-100 * slideDirection) - this.controlCoordinates.swipeDiff + 'px');
         }
-        this.fadeOut(this.domNodes.image, this.options.fadeSpeed, () => {
+        this.fadeOut(this.domNodes.imageInnerWrapper, this.options.fadeSpeed, () => {
             this.isAnimating = true;
             if(!this.isClosing) {
                 setTimeout(() => {
@@ -489,8 +494,8 @@ class SimpleLightbox {
                         this.show(this.domNodes.spinner);
                     }
 
-                    if(this.domNodes.image.contains(this.domNodes.caption)) {
-                      this.domNodes.image.removeChild(this.domNodes.caption);
+                    if(this.domNodes.imageInnerWrapper.contains(this.domNodes.caption)) {
+                      this.domNodes.imageInnerWrapper.removeChild(this.domNodes.caption);
                     }
 
                     this.adjustImage(slideDirection);
@@ -560,11 +565,13 @@ class SimpleLightbox {
                 imageWidth /= ratio;
                 imageHeight /= ratio;
             }
+            this.imageRatio = imageWidth / imageHeight;
+            this.domNodes.image.style.width = null;
 
-            this.domNodes.image.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
-            this.domNodes.image.style.left = (window.innerWidth - imageWidth - this.globalScrollbarWidth) / 2 + 'px';
-            this.domNodes.image.style.width = imageWidth + 'px';
-            this.domNodes.image.style.height = imageHeight + 'px';
+            this.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
+            this.domNodes.imageInnerWrapper.style.left = (window.innerWidth - imageWidth - this.globalScrollbarWidth) / 2 + 'px';
+            this.domNodes.imageInnerWrapper.style.width = imageWidth + 'px';
+            this.domNodes.imageInnerWrapper.style.height = imageHeight + 'px';
 
             this.domNodes.spinner.style.display = 'none';
             if( this.options.focus ) {
@@ -626,7 +633,7 @@ class SimpleLightbox {
                         this.slide(this.options.animationSpeed / 1000, 0 + 'px');
                     }, 50);
                 }
-                this.fadeIn(this.domNodes.image, this.options.fadeSpeed, () => {
+                this.fadeIn(this.domNodes.imageInnerWrapper, this.options.fadeSpeed, () => {
                     this.isAnimating = false;
                     this.setCaption(captionText, imageWidth);
                 });
@@ -640,7 +647,7 @@ class SimpleLightbox {
                 this.domNodes.additionalHtml = document.createElement('div');
                 this.domNodes.additionalHtml.classList.add('sl-additional-html');
                 this.domNodes.additionalHtml.innerHTML = this.options.additionalHtml;
-                this.domNodes.image.appendChild(this.domNodes.additionalHtml);
+                this.domNodes.imageInnerWrapper.appendChild(this.domNodes.additionalHtml);
             }
 
         });
@@ -705,17 +712,17 @@ class SimpleLightbox {
         if (this.options.scrollZoom) {
             let scale = 1
 
-            this.addEventListener(this.domNodes.image, ['mousewheel','DOMMouseScroll'], (event) => {
+            this.addEventListener(this.domNodes.imageInnerWrapper, ['mousewheel','DOMMouseScroll'], (event) => {
                 if (this.controlCoordinates.mousedown || this.isAnimating || this.isClosing || !this.isOpen) {
                     return true;
                 }
                 if(this.controlCoordinates.containerHeight == 0) {
-                    this.controlCoordinates.containerHeight = this.getDimensions(this.domNodes.image).height;
-                    this.controlCoordinates.containerWidth = this.getDimensions(this.domNodes.image).width;
+                    this.controlCoordinates.containerHeight = this.getDimensions(this.domNodes.imageInnerWrapper).height;
+                    this.controlCoordinates.containerWidth = this.getDimensions(this.domNodes.imageInnerWrapper).width;
                     this.controlCoordinates.imgHeight = this.getDimensions(this.currentImage).height;
                     this.controlCoordinates.imgWidth = this.getDimensions(this.currentImage).width;
-                    this.controlCoordinates.containerOffsetX = this.domNodes.image.offsetLeft;
-                    this.controlCoordinates.containerOffsetY = this.domNodes.image.offsetTop;
+                    this.controlCoordinates.containerOffsetX = this.domNodes.imageInnerWrapper.offsetLeft;
+                    this.controlCoordinates.containerOffsetY = this.domNodes.imageInnerWrapper.offsetTop;
 
                     this.controlCoordinates.initialOffsetX = parseFloat(this.currentImage.dataset.translateX);
                     this.controlCoordinates.initialOffsetY = parseFloat(this.currentImage.dataset.translateY);
@@ -775,21 +782,24 @@ class SimpleLightbox {
             });
         }
 
-        this.addEventListener(this.domNodes.image, ['touchstart.' + this.eventNamespace, 'mousedown.' + this.eventNamespace], (event) => {
+        this.addEventListener(this.domNodes.imageInnerWrapper, ['touchstart.' + this.eventNamespace, 'mousedown.' + this.eventNamespace], (event) => {
             if (event.target.tagName === 'A' && event.type === 'touchstart') {
                 return true;
             }
 
+            //TODO improve zoom?? img can only be moved if out of viewport??
+            // let container = this.domNodes.image
+            let container = this.domNodes.imageInnerWrapper
             if (event.type === 'mousedown') {
                 event.preventDefault();
                 this.controlCoordinates.initialPointerOffsetX = event.clientX;
                 this.controlCoordinates.initialPointerOffsetY = event.clientY;
-                this.controlCoordinates.containerHeight = this.getDimensions(this.domNodes.image).height;
-                this.controlCoordinates.containerWidth = this.getDimensions(this.domNodes.image).width;
+                this.controlCoordinates.containerHeight = this.getDimensions(container).height;
+                this.controlCoordinates.containerWidth = this.getDimensions(container).width;
                 this.controlCoordinates.imgHeight = this.getDimensions(this.currentImage).height;
                 this.controlCoordinates.imgWidth = this.getDimensions(this.currentImage).width;
-                this.controlCoordinates.containerOffsetX = this.domNodes.image.offsetLeft;
-                this.controlCoordinates.containerOffsetY = this.domNodes.image.offsetTop;
+                this.controlCoordinates.containerOffsetX = container.offsetLeft;
+                this.controlCoordinates.containerOffsetY = container.offsetTop;
 
                 this.controlCoordinates.initialOffsetX = parseFloat(this.currentImage.dataset.translateX);
                 this.controlCoordinates.initialOffsetY = parseFloat(this.currentImage.dataset.translateY);
@@ -798,12 +808,12 @@ class SimpleLightbox {
                 this.controlCoordinates.touchCount = event.touches.length;
                 this.controlCoordinates.initialPointerOffsetX = event.touches[0].clientX;
                 this.controlCoordinates.initialPointerOffsetY = event.touches[0].clientY;
-                this.controlCoordinates.containerHeight = this.getDimensions(this.domNodes.image).height;
-                this.controlCoordinates.containerWidth = this.getDimensions(this.domNodes.image).width;
+                this.controlCoordinates.containerHeight = this.getDimensions(container).height;
+                this.controlCoordinates.containerWidth = this.getDimensions(container).width;
                 this.controlCoordinates.imgHeight = this.getDimensions(this.currentImage).height;
                 this.controlCoordinates.imgWidth = this.getDimensions(this.currentImage).width;
-                this.controlCoordinates.containerOffsetX = this.domNodes.image.offsetLeft;
-                this.controlCoordinates.containerOffsetY = this.domNodes.image.offsetTop;
+                this.controlCoordinates.containerOffsetX = container.offsetLeft;
+                this.controlCoordinates.containerOffsetY = container.offsetTop;
 
                 if (this.controlCoordinates.touchCount === 1) /* Single touch */ {
                     if (!this.controlCoordinates.doubleTapped) {
@@ -856,7 +866,7 @@ class SimpleLightbox {
             }
             if(this.controlCoordinates.mousedown) return true;
             if (this.transitionCapable) {
-                this.controlCoordinates.imageLeft = parseInt(this.domNodes.image.style.left, 10);
+                this.controlCoordinates.imageLeft = parseInt(this.domNodes.imageInnerWrapper.style.left, 10);
             }
             this.controlCoordinates.mousedown = true;
             this.controlCoordinates.swipeDiff = 0;
@@ -867,7 +877,7 @@ class SimpleLightbox {
             return false;
         });
 
-        this.addEventListener(this.domNodes.image, ['touchmove.' + this.eventNamespace, 'mousemove.' + this.eventNamespace, 'MSPointerMove'], (event) => {
+        this.addEventListener(this.domNodes.imageInnerWrapper, ['touchmove.' + this.eventNamespace, 'mousemove.' + this.eventNamespace, 'MSPointerMove'], (event) => {
 
 
             if (!this.controlCoordinates.mousedown) {
@@ -983,7 +993,7 @@ class SimpleLightbox {
         });
 
 
-        this.addEventListener(this.domNodes.image, ['touchend.' + this.eventNamespace, 'mouseup.' + this.eventNamespace, 'touchcancel.' + this.eventNamespace, 'mouseleave.' + this.eventNamespace, 'pointerup', 'pointercancel', 'MSPointerUp', 'MSPointerCancel'], (event) => {
+        this.addEventListener(this.domNodes.imageInnerWrapper, ['touchend.' + this.eventNamespace, 'mouseup.' + this.eventNamespace, 'touchcancel.' + this.eventNamespace, 'mouseleave.' + this.eventNamespace, 'pointerup', 'pointercancel', 'MSPointerUp', 'MSPointerCancel'], (event) => {
 
 
             if (this.isTouchDevice && event.type === 'touchend') {
@@ -1034,16 +1044,16 @@ class SimpleLightbox {
             }
         });
 
-        this.addEventListener(this.domNodes.image, ['dblclick'], (event) => {
+        this.addEventListener(this.domNodes.imageInnerWrapper, ['dblclick'], (event) => {
             if(this.isTouchDevice) return;
             this.controlCoordinates.initialPointerOffsetX = event.clientX;
             this.controlCoordinates.initialPointerOffsetY = event.clientY;
-            this.controlCoordinates.containerHeight = this.getDimensions(this.domNodes.image).height;
-            this.controlCoordinates.containerWidth = this.getDimensions(this.domNodes.image).width;
+            this.controlCoordinates.containerHeight = this.getDimensions(this.domNodes.imageInnerWrapper).height;
+            this.controlCoordinates.containerWidth = this.getDimensions(this.domNodes.imageInnerWrapper).width;
             this.controlCoordinates.imgHeight = this.getDimensions(this.currentImage).height;
             this.controlCoordinates.imgWidth = this.getDimensions(this.currentImage).width;
-            this.controlCoordinates.containerOffsetX = this.domNodes.image.offsetLeft;
-            this.controlCoordinates.containerOffsetY = this.domNodes.image.offsetTop;
+            this.controlCoordinates.containerOffsetX = this.domNodes.imageInnerWrapper.offsetLeft;
+            this.controlCoordinates.containerOffsetY = this.domNodes.imageInnerWrapper.offsetTop;
 
             this.currentImage.classList.add('sl-transition');
 
@@ -1150,7 +1160,17 @@ class SimpleLightbox {
             this.domNodes.caption.style.width = imageWidth + 'px';
             this.domNodes.caption.innerHTML = captionText;
 
-            this.domNodes.image.appendChild(this.domNodes.caption);
+            this.domNodes.imageInnerWrapper.appendChild(this.domNodes.caption);
+
+            //display it to get the dimensions
+            this.domNodes.caption.style.display = 'block';
+            this.domNodes.caption.style.opacity = '0';
+            let captionRect = this.domNodes.caption.getBoundingClientRect();
+
+            let imageHeightWithoutCaption =this.domNodes.imageInnerWrapper.getBoundingClientRect().height - captionRect.height;
+            let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
+
+            this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
 
             setTimeout(() => {
                 this.fadeIn(this.domNodes.caption, this.options.fadeSpeed);
@@ -1160,11 +1180,11 @@ class SimpleLightbox {
 
     slide(speed, pos) {
         if (!this.transitionCapable) {
-            return this.domNodes.image.style.left = pos;
+            return this.domNodes.imageInnerWrapper.style.left = pos;
         }
 
-        this.domNodes.image.style[this.transitionPrefix + 'transform'] = 'translateX(' + pos + ')';
-        this.domNodes.image.style[this.transitionPrefix + 'transition'] = this.transitionPrefix + 'transform ' + speed + 's linear';
+        this.domNodes.imageInnerWrapper.style[this.transitionPrefix + 'transform'] = 'translateX(' + pos + ')';
+        this.domNodes.imageInnerWrapper.style[this.transitionPrefix + 'transition'] = this.transitionPrefix + 'transform ' + speed + 's linear';
     }
 
     getRelated(rel) {
@@ -1190,7 +1210,7 @@ class SimpleLightbox {
 
         document.body.appendChild(this.domNodes.wrapper);
 
-        this.domNodes.wrapper.appendChild(this.domNodes.image);
+        this.domNodes.wrapper.appendChild(this.domNodes.imageInnerWrapper);
         if (this.options.overlay) {
             document.body.appendChild(this.domNodes.overlay);
         }
@@ -1222,10 +1242,12 @@ class SimpleLightbox {
             this.loadedImages.push(targetURL);
         }
 
-        this.domNodes.image.innerHTML = '';
-        this.domNodes.image.setAttribute('style', '');
+        this.domNodes.imageInnerWrapper.innerHTML = '';
+        this.domNodes.imageInnerWrapper.setAttribute('style', '');
+        this.domNodes.imageInnerWrapper.appendChild(this.domNodes.image);
 
         this.domNodes.image.appendChild(this.currentImage);
+        // this.domNodes.imageInnerWrapper.appendChild(this.currentImage);
 
 
         this.fadeIn(this.domNodes.overlay, this.options.fadeSpeed);
