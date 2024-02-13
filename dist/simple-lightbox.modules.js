@@ -1080,7 +1080,6 @@ var SimpleLightbox = /*#__PURE__*/function () {
       // this.domNodes.nextCaption.style.opacity = '0'; //not required, because abs positioned and hidden
       this.domNodes.imageInnerWrapper.appendChild(this.domNodes.nextCaption);
       var newCaptionRect = this.domNodes.nextCaption.getBoundingClientRect();
-      console.log("newCaptionRect", newCaptionRect);
       return newCaptionRect;
     }
   }, {
@@ -1159,6 +1158,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
       if (this.loadedImages.indexOf(targetURL) === -1) {
         this.loadedImages.push(targetURL);
       }
+      this.domNodes.image.innerHTML = ''; //this clears all old child images
       this.domNodes.imageInnerWrapper.innerHTML = '';
       this.domNodes.imageInnerWrapper.setAttribute('style', '');
       this.domNodes.imageInnerWrapper.appendChild(this.domNodes.image);

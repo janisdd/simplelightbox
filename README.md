@@ -1,6 +1,10 @@
 
 ### Changes
 
+- 2.10.6
+  - fixed (own) issue where images (most inner) were not properly removed
+  - removed some logging
+
 - 2.10.5
   - fixed flickering issue (if we switch from an image with no caption to an image with a large caption (the image size "jumps")
     - we now pre-calculate the caption box size and set the image size properly

@@ -291,8 +291,8 @@ class SimpleLightbox {
         if (this.options.captionClass) {
             this.domNodes.nextCaption.classList.add(this.options.captionClass);
         }
-
-        this.domNodes.image = document.createElement('div');
+        this.domNodes.image
+         = document.createElement('div');
         this.domNodes.image.classList.add('sl-image');
 
         this.domNodes.imageInnerWrapper = document.createElement('div');
@@ -1209,8 +1209,6 @@ class SimpleLightbox {
 
         let newCaptionRect = this.domNodes.nextCaption.getBoundingClientRect();
 
-        console.log(`newCaptionRect`, newCaptionRect)
-
         return newCaptionRect
     }
 
@@ -1296,6 +1294,7 @@ class SimpleLightbox {
             this.loadedImages.push(targetURL);
         }
 
+        this.domNodes.image.innerHTML = ''; //this clears all old child images
         this.domNodes.imageInnerWrapper.innerHTML = '';
         this.domNodes.imageInnerWrapper.setAttribute('style', '');
         this.domNodes.imageInnerWrapper.appendChild(this.domNodes.image);
