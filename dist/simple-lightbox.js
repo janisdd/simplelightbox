@@ -5,7 +5,6 @@
 	Version 2.10.4
 */
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function (global){(function (){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -272,6 +271,15 @@ var SimpleLightbox = /*#__PURE__*/function () {
       if (this.options.captionClass) {
         this.domNodes.caption.classList.add(this.options.captionClass);
       }
+
+      //next caption, used to measure the size of the next caption box
+      this.domNodes.nextCaption = document.createElement('div');
+      this.domNodes.nextCaption.classList.add('sl-caption', 'pos-' + this.options.captionPosition);
+      this.domNodes.nextCaption.style.visibility = 'hidden';
+      this.domNodes.nextCaption.setAttribute("data-new-caption-measure", true);
+      if (this.options.captionClass) {
+        this.domNodes.nextCaption.classList.add(this.options.captionClass);
+      }
       this.domNodes.image = document.createElement('div');
       this.domNodes.image.classList.add('sl-image');
       this.domNodes.imageInnerWrapper = document.createElement('div');
@@ -374,7 +382,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
       }
       this.removeEventListener(document, 'focusin.' + this.eventNamespace);
       this.fadeOut(this.domNodes.overlay, this.options.fadeSpeed);
-      this.fadeOut(document.querySelectorAll('.sl-image img,  .sl-close, .sl-navigation, .sl-image .sl-caption, .sl-counter'), this.options.fadeSpeed, function () {
+      this.fadeOut(document.querySelectorAll('.sl-image img,  .sl-close, .sl-navigation, .sl-image-inner-wrapper .sl-caption, .sl-counter'), this.options.fadeSpeed, function () {
         if (_this2.options.disableScroll) {
           _this2.toggleScrollbar('show');
         }
@@ -465,6 +473,9 @@ var SimpleLightbox = /*#__PURE__*/function () {
             if (_this4.domNodes.imageInnerWrapper.contains(_this4.domNodes.caption)) {
               _this4.domNodes.imageInnerWrapper.removeChild(_this4.domNodes.caption);
             }
+            if (_this4.domNodes.imageInnerWrapper.contains(_this4.domNodes.nextCaption)) {
+              _this4.domNodes.imageInnerWrapper.removeChild(_this4.domNodes.nextCaption);
+            }
             _this4.adjustImage(slideDirection);
             if (_this4.options.preloading) _this4.preload();
           }, 100);
@@ -515,29 +526,6 @@ var SimpleLightbox = /*#__PURE__*/function () {
         if (_this5.loadedImages.indexOf(_this5.currentImage.getAttribute('src')) === -1) {
           _this5.loadedImages.push(_this5.currentImage.getAttribute('src'));
         }
-        var imageWidth = event.target.width,
-          imageHeight = event.target.height;
-        if (_this5.options.scaleImageToRatio || imageWidth > windowWidth || imageHeight > windowHeight) {
-          var ratio = imageWidth / imageHeight > windowWidth / windowHeight ? imageWidth / windowWidth : imageHeight / windowHeight;
-          imageWidth /= ratio;
-          imageHeight /= ratio;
-        }
-        _this5.imageRatio = imageWidth / imageHeight;
-        _this5.domNodes.image.style.width = null;
-        _this5.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
-        _this5.domNodes.imageInnerWrapper.style.left = (window.innerWidth - imageWidth - _this5.globalScrollbarWidth) / 2 + 'px';
-        _this5.domNodes.imageInnerWrapper.style.width = imageWidth + 'px';
-        _this5.domNodes.imageInnerWrapper.style.height = imageHeight + 'px';
-        _this5.domNodes.spinner.style.display = 'none';
-        if (_this5.options.focus) {
-          _this5.forceFocus();
-        }
-        _this5.fadeIn(_this5.currentImage, _this5.options.fadeSpeed, function () {
-          if (_this5.options.focus) {
-            _this5.domNodes.wrapper.focus();
-          }
-        });
-        _this5.isOpen = true;
         var captionContainer, captionText;
         if (typeof _this5.options.captionSelector === 'string') {
           captionContainer = _this5.options.captionSelector === 'self' ? _this5.relatedElements[_this5.currentImageIndex] : _this5.relatedElements[_this5.currentImageIndex].querySelector(_this5.options.captionSelector);
@@ -553,6 +541,35 @@ var SimpleLightbox = /*#__PURE__*/function () {
             captionText = captionContainer.getAttribute(_this5.options.captionsData);
           }
         }
+        var imageWidth = event.target.width,
+          imageHeight = event.target.height;
+        if (_this5.options.scaleImageToRatio || imageWidth > windowWidth || imageHeight > windowHeight) {
+          var ratio = imageWidth / imageHeight > windowWidth / windowHeight ? imageWidth / windowWidth : imageHeight / windowHeight;
+          imageWidth /= ratio;
+          imageHeight /= ratio;
+        }
+        _this5.imageRatio = imageWidth / imageHeight;
+        _this5.domNodes.image.style.width = null;
+
+        //wrapper uses the initial dimensions of the image to calculate the correct size
+        _this5.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
+        _this5.domNodes.imageInnerWrapper.style.left = (window.innerWidth - imageWidth - _this5.globalScrollbarWidth) / 2 + 'px';
+        _this5.domNodes.imageInnerWrapper.style.width = imageWidth + 'px';
+        _this5.domNodes.imageInnerWrapper.style.height = imageHeight + 'px';
+
+        //only required on first image opening
+        //if we go to the next/prev image this rect has no size because we hide it
+        var initialNewCaptionRect = _this5.getNewCaptionRect(captionText, imageWidth);
+        _this5.domNodes.spinner.style.display = 'none';
+        if (_this5.options.focus) {
+          _this5.forceFocus();
+        }
+        _this5.fadeIn(_this5.currentImage, _this5.options.fadeSpeed, function () {
+          if (_this5.options.focus) {
+            _this5.domNodes.wrapper.focus();
+          }
+        });
+        _this5.isOpen = true;
         if (!_this5.options.loop) {
           if (_this5.currentImageIndex === 0) {
             _this5.hide(_this5.domNodes.navigation.querySelector('.sl-prev'));
@@ -583,9 +600,25 @@ var SimpleLightbox = /*#__PURE__*/function () {
           _this5.fadeIn(_this5.domNodes.imageInnerWrapper, _this5.options.fadeSpeed, function () {
             _this5.isAnimating = false;
             _this5.setCaption(captionText, imageWidth);
+          }, 'block', function () {
+            //only called if we go to the next/prev image
+            var newCaptionRect = _this5.getNewCaptionRect(captionText, imageWidth);
+
+            //then we add the caption box below the image (outside)
+            //thus, we must shrink the image height to make space for the caption
+            var imageHeightWithoutCaption = _this5.domNodes.imageInnerWrapper.getBoundingClientRect().height - newCaptionRect.height;
+            var requiredWithForTargetHeight = imageHeightWithoutCaption * _this5.imageRatio;
+
+            //this is the correct size for the image
+            _this5.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
           });
         } else {
           _this5.isAnimating = false;
+          var imageHeightWithoutCaption = _this5.domNodes.imageInnerWrapper.getBoundingClientRect().height - initialNewCaptionRect.height;
+          var requiredWithForTargetHeight = imageHeightWithoutCaption * _this5.imageRatio;
+
+          //this is the correct size for the image
+          _this5.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
           _this5.setCaption(captionText, imageWidth);
         }
         if (_this5.options.additionalHtml && !_this5.domNodes.additionalHtml) {
@@ -1035,6 +1068,22 @@ var SimpleLightbox = /*#__PURE__*/function () {
         this.historyUpdateTimeout = setTimeout(this.updateHash.bind(this), 800);
       }
     }
+
+    //we set the width to the given image width
+  }, {
+    key: "getNewCaptionRect",
+    value: function getNewCaptionRect(captionText, imageWidth) {
+      var hasCaption = this.options.captions && captionText && captionText !== '' && typeof captionText !== "undefined";
+      if (!hasCaption) return 0;
+      this.domNodes.nextCaption.style.width = imageWidth + 'px';
+      this.domNodes.nextCaption.innerHTML = captionText;
+      this.domNodes.nextCaption.style.display = 'block';
+      // this.domNodes.nextCaption.style.opacity = '0'; //not required, because abs positioned and hidden
+      this.domNodes.imageInnerWrapper.appendChild(this.domNodes.nextCaption);
+      var newCaptionRect = this.domNodes.nextCaption.getBoundingClientRect();
+      console.log("newCaptionRect", newCaptionRect);
+      return newCaptionRect;
+    }
   }, {
     key: "setCaption",
     value: function setCaption(captionText, imageWidth) {
@@ -1048,10 +1097,6 @@ var SimpleLightbox = /*#__PURE__*/function () {
         //display it to get the dimensions
         this.domNodes.caption.style.display = 'block';
         this.domNodes.caption.style.opacity = '0';
-        var captionRect = this.domNodes.caption.getBoundingClientRect();
-        var imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - captionRect.height;
-        var requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio;
-        this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
         setTimeout(function () {
           _this7.fadeIn(_this7.domNodes.caption, _this7.options.fadeSpeed);
         }, this.options.captionDelay);
@@ -1280,7 +1325,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
     }
   }, {
     key: "fadeIn",
-    value: function fadeIn(elements, duration, callback, display) {
+    value: function fadeIn(elements, duration, callback, display, preStartCallback) {
       var _this11 = this;
       elements = this.wrap(elements);
       var _iterator8 = _createForOfIteratorHelper(elements),
@@ -1296,6 +1341,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
       } finally {
         _iterator8.f();
       }
+      preStartCallback && preStartCallback.call(this);
       this.isFadeIn = true;
       var opacityTarget = parseFloat(elements[0].dataset.opacityTarget || 1),
         step = 16.66666 * opacityTarget / (duration || this.options.fadeSpeed),
@@ -1511,10 +1557,9 @@ var SimpleLightbox = /*#__PURE__*/function () {
     }
   }]);
   return SimpleLightbox;
-}();
+}(); //comment out to try example
 var _default = SimpleLightbox;
 exports["default"] = _default;
-global.SimpleLightbox = SimpleLightbox;
+globalThis.SimpleLightbox = SimpleLightbox;
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}]},{},[1]);
