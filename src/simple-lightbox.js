@@ -277,6 +277,15 @@ class SimpleLightbox {
             this.domNodes.caption.classList.add(this.options.captionClass);
         }
 
+        //next caption, used to measure the size of the next caption box
+        this.domNodes.nextCaption = document.createElement('div');
+        this.domNodes.nextCaption.classList.add('sl-caption', 'pos-' + this.options.captionPosition);
+        this.domNodes.nextCaption.style.visibility = 'hidden';
+        this.domNodes.nextCaption.setAttribute(`data-new-caption-measure`, true);
+        if (this.options.captionClass) {
+            this.domNodes.nextCaption.classList.add(this.options.captionClass);
+        }
+
         this.domNodes.image = document.createElement('div');
         this.domNodes.image.classList.add('sl-image');
 
@@ -390,7 +399,7 @@ class SimpleLightbox {
         this.removeEventListener(document, 'focusin.' + this.eventNamespace);
 
         this.fadeOut(this.domNodes.overlay, this.options.fadeSpeed);
-        this.fadeOut(document.querySelectorAll('.sl-image img,  .sl-close, .sl-navigation, .sl-image .sl-caption, .sl-counter'), this.options.fadeSpeed, () => {
+        this.fadeOut(document.querySelectorAll('.sl-image img,  .sl-close, .sl-navigation, .sl-image-inner-wrapper .sl-caption, .sl-counter'), this.options.fadeSpeed, () => {
             if (this.options.disableScroll) {
                 this.toggleScrollbar('show');
             }
@@ -491,6 +500,9 @@ class SimpleLightbox {
                     if(this.domNodes.imageInnerWrapper.contains(this.domNodes.caption)) {
                       this.domNodes.imageInnerWrapper.removeChild(this.domNodes.caption);
                     }
+                    if(this.domNodes.imageInnerWrapper.contains(this.domNodes.nextCaption)) {
+                        this.domNodes.imageInnerWrapper.removeChild(this.domNodes.nextCaption)
+                    }
 
                     this.adjustImage(slideDirection);
                     if (this.options.preloading) this.preload();
@@ -551,6 +563,28 @@ class SimpleLightbox {
                 this.loadedImages.push(this.currentImage.getAttribute('src'));
             }
 
+
+            let captionContainer,
+              captionText;
+
+            if (typeof this.options.captionSelector === 'string') {
+                captionContainer = this.options.captionSelector === 'self' ? this.relatedElements[this.currentImageIndex] : this.relatedElements[this.currentImageIndex].querySelector(this.options.captionSelector);
+            } else if (typeof this.options.captionSelector === 'function') {
+                captionContainer = this.options.captionSelector(this.relatedElements[this.currentImageIndex]);
+            }
+
+            if (this.options.captions && captionContainer) {
+                if (this.options.captionType === 'data') {
+                    captionText = captionContainer.dataset[this.options.captionsData];
+                } else if (this.options.captionType === 'text') {
+                    captionText = captionContainer.innerHTML;
+                } else {
+                    captionText = captionContainer.getAttribute(this.options.captionsData);
+                }
+            }
+
+
+
             let imageWidth = event.target.width,
                 imageHeight = event.target.height;
 
@@ -562,10 +596,16 @@ class SimpleLightbox {
             this.imageRatio = imageWidth / imageHeight;
             this.domNodes.image.style.width = null;
 
+
+            //wrapper uses the initial dimensions of the image to calculate the correct size
             this.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
             this.domNodes.imageInnerWrapper.style.left = (window.innerWidth - imageWidth - this.globalScrollbarWidth) / 2 + 'px';
             this.domNodes.imageInnerWrapper.style.width = imageWidth + 'px';
             this.domNodes.imageInnerWrapper.style.height = imageHeight + 'px';
+
+            //only required on first image opening
+            //if we go to the next/prev image this rect has no size because we hide it
+            let initialNewCaptionRect = this.getNewCaptionRect(captionText, imageWidth);
 
             this.domNodes.spinner.style.display = 'none';
             if( this.options.focus ) {
@@ -579,24 +619,6 @@ class SimpleLightbox {
 
             this.isOpen = true;
 
-            let captionContainer,
-                captionText;
-
-            if (typeof this.options.captionSelector === 'string') {
-                captionContainer = this.options.captionSelector === 'self' ? this.relatedElements[this.currentImageIndex] : this.relatedElements[this.currentImageIndex].querySelector(this.options.captionSelector);
-            } else if (typeof this.options.captionSelector === 'function') {
-                captionContainer = this.options.captionSelector(this.relatedElements[this.currentImageIndex]);
-            }
-
-            if(this.options.captions && captionContainer) {
-                if (this.options.captionType === 'data') {
-                    captionText = captionContainer.dataset[this.options.captionsData];
-                } else if (this.options.captionType === 'text') {
-                    captionText = captionContainer.innerHTML;
-                } else {
-                    captionText = captionContainer.getAttribute(this.options.captionsData);
-                }
-            }
 
             if (!this.options.loop) {
                 if (this.currentImageIndex === 0) {
@@ -630,10 +652,30 @@ class SimpleLightbox {
                 this.fadeIn(this.domNodes.imageInnerWrapper, this.options.fadeSpeed, () => {
                     this.isAnimating = false;
                     this.setCaption(captionText, imageWidth);
+                }, 'block', () => {
+
+                    //only called if we go to the next/prev image
+                    let newCaptionRect = this.getNewCaptionRect(captionText, imageWidth);
+
+                    //then we add the caption box below the image (outside)
+                    //thus, we must shrink the image height to make space for the caption
+                    let imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - newCaptionRect.height
+                    let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
+
+                    //this is the correct size for the image
+                    this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
+
                 });
 
             } else {
                 this.isAnimating = false;
+
+                let imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - initialNewCaptionRect.height
+                let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
+
+                //this is the correct size for the image
+                this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
+
                 this.setCaption(captionText, imageWidth);
             }
 
@@ -1148,6 +1190,24 @@ class SimpleLightbox {
         }
     }
 
+    //we set the width to the given image width
+    getNewCaptionRect(captionText, imageWidth) {
+        let hasCaption = this.options.captions && captionText && captionText !== '' && typeof captionText !== "undefined"
+        if (!hasCaption) return 0
+
+        this.domNodes.nextCaption.style.width = imageWidth + 'px';
+        this.domNodes.nextCaption.innerHTML = captionText
+        this.domNodes.nextCaption.style.display = 'block';
+        // this.domNodes.nextCaption.style.opacity = '0'; //not required, because abs positioned and hidden
+        this.domNodes.imageInnerWrapper.appendChild(this.domNodes.nextCaption);
+
+        let newCaptionRect = this.domNodes.nextCaption.getBoundingClientRect();
+
+        console.log(`newCaptionRect`, newCaptionRect)
+
+        return newCaptionRect
+    }
+
     setCaption(captionText, imageWidth) {
         if (this.options.captions && captionText && captionText !== '' && typeof captionText !== "undefined") {
             this.hide(this.domNodes.caption);
@@ -1159,12 +1219,6 @@ class SimpleLightbox {
             //display it to get the dimensions
             this.domNodes.caption.style.display = 'block';
             this.domNodes.caption.style.opacity = '0';
-            let captionRect = this.domNodes.caption.getBoundingClientRect();
-
-            let imageHeightWithoutCaption =this.domNodes.imageInnerWrapper.getBoundingClientRect().height - captionRect.height;
-            let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
-
-            this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
 
             setTimeout(() => {
                 this.fadeIn(this.domNodes.caption, this.options.fadeSpeed);
@@ -1341,12 +1395,14 @@ class SimpleLightbox {
         fade();
     }
 
-    fadeIn(elements, duration, callback, display) {
+    fadeIn(elements, duration, callback, display, preStartCallback) {
         elements = this.wrap(elements);
         for (let element of elements) {
             element.style.opacity = 0;
             element.style.display = display || "block";
         }
+
+        preStartCallback && preStartCallback.call(this);
 
         this.isFadeIn = true;
 
@@ -1502,6 +1558,7 @@ class SimpleLightbox {
         return this;
     }
 }
+//comment out to try example
 export default SimpleLightbox;
 
-global.SimpleLightbox = SimpleLightbox;
+globalThis.SimpleLightbox = SimpleLightbox;
