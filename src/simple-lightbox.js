@@ -596,6 +596,8 @@ class SimpleLightbox {
             this.imageRatio = imageWidth / imageHeight;
             this.domNodes.image.style.width = null;
 
+            let initialImageWidth = imageWidth
+            let initialImageHeight = imageHeight
 
             //wrapper uses the initial dimensions of the image to calculate the correct size
             this.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
@@ -605,7 +607,7 @@ class SimpleLightbox {
 
             //only required on first image opening
             //if we go to the next/prev image this rect has no size because we hide it
-            let initialNewCaptionRect = this.getNewCaptionRect(captionText, imageWidth);
+            let initialNewCaptionRect = this.getNewCaptionRect(captionText, imageWidth, true);
 
             this.domNodes.spinner.style.display = 'none';
             if( this.options.focus ) {
@@ -641,7 +643,7 @@ class SimpleLightbox {
                 }
             }
 
-
+            let finalCaptionWidth = 0
             if (direction === 1 || direction === -1) {
                 if (this.options.animationSlide) {
                     this.slide(0, 100 * direction + 'px');
@@ -651,32 +653,30 @@ class SimpleLightbox {
                 }
                 this.fadeIn(this.domNodes.imageInnerWrapper, this.options.fadeSpeed, () => {
                     this.isAnimating = false;
-                    this.setCaption(captionText, imageWidth);
+                    this.setCaption(captionText, finalCaptionWidth);
                 }, 'block', () => {
 
                     //only called if we go to the next/prev image
                     let newCaptionRect = this.getNewCaptionRect(captionText, imageWidth);
 
+                    finalCaptionWidth = this._setImageDimensions(captionText, newCaptionRect)
+
                     //then we add the caption box below the image (outside)
                     //thus, we must shrink the image height to make space for the caption
-                    let imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - newCaptionRect.height
-                    let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
+                    // let imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - newCaptionRect.height
+                    // let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
 
                     //this is the correct size for the image
-                    this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
+                    // this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
 
                 });
 
             } else {
                 this.isAnimating = false;
 
-                let imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - initialNewCaptionRect.height
-                let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
+                finalCaptionWidth = this._setImageDimensions(captionText, initialNewCaptionRect)
 
-                //this is the correct size for the image
-                this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
-
-                this.setCaption(captionText, imageWidth);
+                this.setCaption(captionText, finalCaptionWidth);
             }
 
             if (this.options.additionalHtml && !this.domNodes.additionalHtml) {
@@ -687,6 +687,42 @@ class SimpleLightbox {
             }
 
         });
+    }
+
+    //this does not work for very small screens or for very long captions
+    //problem:
+    //  step 1: we set the caption width -> caption height changes
+    //  we need to set (decrease) the image height else we might go out of viewport -> set image width because aspect ratio
+    //  --> caption is wider than the image -> set (decrease) caption width -> step 1 again...
+    //
+    _setImageDimensions(captionText, initialNewCaptionRect) {
+
+        let maxIterations = 1
+        let requiredWithForTargetHeight
+        let imageHeightWithoutCaption
+        let newCaptionRectUpdated
+
+        //we should not get bigger than this
+        let maxWrapperRect = this.domNodes.imageInnerWrapper.getBoundingClientRect()
+
+        imageHeightWithoutCaption = maxWrapperRect.height - initialNewCaptionRect.height
+        requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
+
+        //this is the correct size for the image
+        this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
+
+        newCaptionRectUpdated = this.getNewCaptionRect(captionText, requiredWithForTargetHeight, false);
+
+        initialNewCaptionRect = newCaptionRectUpdated
+
+        let imageWrapperHeight = imageHeightWithoutCaption + newCaptionRectUpdated.height
+
+        this.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageWrapperHeight) / 2 + 'px';
+        this.domNodes.imageInnerWrapper.style.left = (window.innerWidth - requiredWithForTargetHeight - this.globalScrollbarWidth) / 2 + 'px';
+        this.domNodes.imageInnerWrapper.style.width = requiredWithForTargetHeight + 'px';
+        this.domNodes.imageInnerWrapper.style.height = imageWrapperHeight + 'px';
+
+        return requiredWithForTargetHeight
     }
 
     zoomPanElement(targetOffsetX, targetOffsetY, targetScale) {
@@ -1191,7 +1227,7 @@ class SimpleLightbox {
     }
 
     //we set the width to the given image width
-    getNewCaptionRect(captionText, imageWidth) {
+    getNewCaptionRect(captionText, imageWidth, needToAddNextCaption) {
         let hasCaption = this.options.captions && captionText && captionText !== '' && typeof captionText !== "undefined"
         if (!hasCaption) return 0
 
@@ -1199,17 +1235,20 @@ class SimpleLightbox {
         this.domNodes.nextCaption.innerHTML = captionText
         this.domNodes.nextCaption.style.display = 'block';
         // this.domNodes.nextCaption.style.opacity = '0'; //not required, because abs positioned and hidden
-        this.domNodes.imageInnerWrapper.appendChild(this.domNodes.nextCaption);
+
+        if (needToAddNextCaption) {
+            this.domNodes.imageInnerWrapper.appendChild(this.domNodes.nextCaption);
+        }
 
         let newCaptionRect = this.domNodes.nextCaption.getBoundingClientRect();
 
         return newCaptionRect
     }
 
-    setCaption(captionText, imageWidth) {
+    setCaption(captionText, captioneWidth) {
         if (this.options.captions && captionText && captionText !== '' && typeof captionText !== "undefined") {
             this.hide(this.domNodes.caption);
-            this.domNodes.caption.style.width = imageWidth + 'px';
+            this.domNodes.caption.style.width = captioneWidth + 'px';
             this.domNodes.caption.innerHTML = captionText;
 
             this.domNodes.imageInnerWrapper.appendChild(this.domNodes.caption);

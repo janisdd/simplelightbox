@@ -138,7 +138,8 @@ body.hidden-scroll {
       position: absolute;
       bottom: 0;
       left: 0;
-      right: 0; }
+      right: 0;
+      margin: auto; }
       .sl-wrapper .sl-image-inner-wrapper .sl-caption.pos-top {
         bottom: auto;
         top: 0; }

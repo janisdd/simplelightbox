@@ -550,6 +550,8 @@ var SimpleLightbox = /*#__PURE__*/function () {
         }
         _this5.imageRatio = imageWidth / imageHeight;
         _this5.domNodes.image.style.width = null;
+        var initialImageWidth = imageWidth;
+        var initialImageHeight = imageHeight;
 
         //wrapper uses the initial dimensions of the image to calculate the correct size
         _this5.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageHeight) / 2 + 'px';
@@ -559,7 +561,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
 
         //only required on first image opening
         //if we go to the next/prev image this rect has no size because we hide it
-        var initialNewCaptionRect = _this5.getNewCaptionRect(captionText, imageWidth);
+        var initialNewCaptionRect = _this5.getNewCaptionRect(captionText, imageWidth, true);
         _this5.domNodes.spinner.style.display = 'none';
         if (_this5.options.focus) {
           _this5.forceFocus();
@@ -590,6 +592,7 @@ var SimpleLightbox = /*#__PURE__*/function () {
             _this5.show(_this5.domNodes.navigation.querySelectorAll('.sl-prev, .sl-next'));
           }
         }
+        var finalCaptionWidth = 0;
         if (direction === 1 || direction === -1) {
           if (_this5.options.animationSlide) {
             _this5.slide(0, 100 * direction + 'px');
@@ -599,27 +602,24 @@ var SimpleLightbox = /*#__PURE__*/function () {
           }
           _this5.fadeIn(_this5.domNodes.imageInnerWrapper, _this5.options.fadeSpeed, function () {
             _this5.isAnimating = false;
-            _this5.setCaption(captionText, imageWidth);
+            _this5.setCaption(captionText, finalCaptionWidth);
           }, 'block', function () {
             //only called if we go to the next/prev image
             var newCaptionRect = _this5.getNewCaptionRect(captionText, imageWidth);
+            finalCaptionWidth = _this5._setImageDimensions(captionText, newCaptionRect);
 
             //then we add the caption box below the image (outside)
             //thus, we must shrink the image height to make space for the caption
-            var imageHeightWithoutCaption = _this5.domNodes.imageInnerWrapper.getBoundingClientRect().height - newCaptionRect.height;
-            var requiredWithForTargetHeight = imageHeightWithoutCaption * _this5.imageRatio;
+            // let imageHeightWithoutCaption = this.domNodes.imageInnerWrapper.getBoundingClientRect().height - newCaptionRect.height
+            // let requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio
 
             //this is the correct size for the image
-            _this5.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
+            // this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
           });
         } else {
           _this5.isAnimating = false;
-          var imageHeightWithoutCaption = _this5.domNodes.imageInnerWrapper.getBoundingClientRect().height - initialNewCaptionRect.height;
-          var requiredWithForTargetHeight = imageHeightWithoutCaption * _this5.imageRatio;
-
-          //this is the correct size for the image
-          _this5.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
-          _this5.setCaption(captionText, imageWidth);
+          finalCaptionWidth = _this5._setImageDimensions(captionText, initialNewCaptionRect);
+          _this5.setCaption(captionText, finalCaptionWidth);
         }
         if (_this5.options.additionalHtml && !_this5.domNodes.additionalHtml) {
           _this5.domNodes.additionalHtml = document.createElement('div');
@@ -628,6 +628,37 @@ var SimpleLightbox = /*#__PURE__*/function () {
           _this5.domNodes.imageInnerWrapper.appendChild(_this5.domNodes.additionalHtml);
         }
       });
+    }
+
+    //this does not work for very small screens or for very long captions
+    //problem:
+    //  step 1: we set the caption width -> caption height changes
+    //  we need to set (decrease) the image height else we might go out of viewport -> set image width because aspect ratio
+    //  --> caption is wider than the image -> set (decrease) caption width -> step 1 again...
+    //
+  }, {
+    key: "_setImageDimensions",
+    value: function _setImageDimensions(captionText, initialNewCaptionRect) {
+      var maxIterations = 1;
+      var requiredWithForTargetHeight;
+      var imageHeightWithoutCaption;
+      var newCaptionRectUpdated;
+
+      //we should not get bigger than this
+      var maxWrapperRect = this.domNodes.imageInnerWrapper.getBoundingClientRect();
+      imageHeightWithoutCaption = maxWrapperRect.height - initialNewCaptionRect.height;
+      requiredWithForTargetHeight = imageHeightWithoutCaption * this.imageRatio;
+
+      //this is the correct size for the image
+      this.domNodes.image.style.width = requiredWithForTargetHeight + 'px';
+      newCaptionRectUpdated = this.getNewCaptionRect(captionText, requiredWithForTargetHeight, false);
+      initialNewCaptionRect = newCaptionRectUpdated;
+      var imageWrapperHeight = imageHeightWithoutCaption + newCaptionRectUpdated.height;
+      this.domNodes.imageInnerWrapper.style.top = (window.innerHeight - imageWrapperHeight) / 2 + 'px';
+      this.domNodes.imageInnerWrapper.style.left = (window.innerWidth - requiredWithForTargetHeight - this.globalScrollbarWidth) / 2 + 'px';
+      this.domNodes.imageInnerWrapper.style.width = requiredWithForTargetHeight + 'px';
+      this.domNodes.imageInnerWrapper.style.height = imageWrapperHeight + 'px';
+      return requiredWithForTargetHeight;
     }
   }, {
     key: "zoomPanElement",
@@ -1072,24 +1103,27 @@ var SimpleLightbox = /*#__PURE__*/function () {
     //we set the width to the given image width
   }, {
     key: "getNewCaptionRect",
-    value: function getNewCaptionRect(captionText, imageWidth) {
+    value: function getNewCaptionRect(captionText, imageWidth, needToAddNextCaption) {
       var hasCaption = this.options.captions && captionText && captionText !== '' && typeof captionText !== "undefined";
       if (!hasCaption) return 0;
       this.domNodes.nextCaption.style.width = imageWidth + 'px';
       this.domNodes.nextCaption.innerHTML = captionText;
       this.domNodes.nextCaption.style.display = 'block';
       // this.domNodes.nextCaption.style.opacity = '0'; //not required, because abs positioned and hidden
-      this.domNodes.imageInnerWrapper.appendChild(this.domNodes.nextCaption);
+
+      if (needToAddNextCaption) {
+        this.domNodes.imageInnerWrapper.appendChild(this.domNodes.nextCaption);
+      }
       var newCaptionRect = this.domNodes.nextCaption.getBoundingClientRect();
       return newCaptionRect;
     }
   }, {
     key: "setCaption",
-    value: function setCaption(captionText, imageWidth) {
+    value: function setCaption(captionText, captioneWidth) {
       var _this7 = this;
       if (this.options.captions && captionText && captionText !== '' && typeof captionText !== "undefined") {
         this.hide(this.domNodes.caption);
-        this.domNodes.caption.style.width = imageWidth + 'px';
+        this.domNodes.caption.style.width = captioneWidth + 'px';
         this.domNodes.caption.innerHTML = captionText;
         this.domNodes.imageInnerWrapper.appendChild(this.domNodes.caption);
 

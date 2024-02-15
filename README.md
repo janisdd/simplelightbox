@@ -1,6 +1,11 @@
 
 ### Changes
 
+- 2.10.7
+  - fixed issue where caption is wider than image
+    - this can cause the image/caption to be outside the viewport (on small screens or with long captions)
+      - cannot be fixed (recursive problem, maybe iteratively...) 
+
 - 2.10.6
   - fixed (own) issue where images (most inner) were not properly removed
   - removed some logging
